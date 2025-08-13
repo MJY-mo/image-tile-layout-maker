@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像放り込み一覧メーカー</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SortableJS for drag-and-drop reordering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- html2canvas for exporting as image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Arial', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Meiryo', sans-serif;
+        }
+        /* Hide scrollbar for the sidebar but allow scrolling */
+        #left-panel::-webkit-scrollbar {
+            display: none;
+        }
+        #left-panel {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .drop-zone-bg {
+            background-image:
+                linear-gradient(45deg, #ccc 25%, transparent 25%),
+                linear-gradient(-45deg, #ccc 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #ccc 75%),
+                linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        .tile {
+            touch-action: none; /* for mobile drag-and-drop */
+            position: relative;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .tile img {
+            position: absolute;
+            max-width: none;
+            object-fit: contain;
+        }
+        #bg-image-element {
+            background-size: cover;
+        }
+        .delete-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 24px;
+            height: 24px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+        .tile:hover .delete-btn {
+            opacity: 1;
+        }
+        /* Highlight active panel button colors */
+        .panel-button.active-green {
+            background-color: #16a34a; /* bg-green-600 */
+            color: white;
+        }
+        .panel-button.active-purple {
+            background-color: #a855f7; /* bg-purple-500 */
+            color: white;
+        }
+        .accordion-content {
+            transition: max-height 0.3s ease-in-out;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex flex-col h-screen">
+
+    <!-- Header -->
+    <header class="bg-white shadow-md p-2 flex items-center justify-between flex-shrink-0 z-20">
+        <h1 class="text-xl font-bold text-gray-700" data-lang="appTitle">画像放り込み一覧メーカー</h1>
+        <div class="flex items-center space-x-2">
+            <!-- Left Panel Toggles -->
+            <button id="export-btn" class="panel-button bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm" data-lang="exportImage">画像出力</button>
+            <button id="help-btn" class="panel-button bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm" data-lang="howToUse">操作方法</button>
+            
+            <div class="border-l h-8 mx-2"></div>
+
+            <!-- Data Management -->
+            <button id="save-state-btn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm" data-lang="save">保存</button>
+            <button id="load-state-btn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm" data-lang="load">呼び出し</button>
+            <input type="file" id="load-state-input" class="hidden" accept=".json">
+
+            <div class="border-l h-8 mx-2"></div>
+
+            <!-- Language Selector -->
+            <button id="language-toggle-btn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm"></button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex flex-grow overflow-hidden">
+        <!-- Left Panel -->
+        <aside id="left-panel" class="w-80 bg-white p-4 shadow-lg overflow-y-auto flex-shrink-0 transition-all duration-300 ease-in-out -translate-x-full absolute md:relative md:translate-x-0 z-10 h-full">
+            <!-- Settings Panel -->
+            <div id="settings-panel" class="panel-content space-y-4 hidden">
+                <h2 class="text-lg font-bold border-b pb-2" data-lang="settingsTitle">設定</h2>
+                
+                <!-- Canvas Settings Accordion -->
+                <div class="accordion-item border rounded-md">
+                    <h3 class="accordion-toggle flex justify-between items-center w-full font-semibold cursor-pointer p-2 bg-gray-50">
+                        <span data-lang="canvasSettings">フィールド設定</span>
+                        <svg class="accordion-arrow w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </h3>
+                    <div class="accordion-content">
+                        <div class="p-3 space-y-3">
+                            <div class="flex items-center text-sm">
+                                <span data-lang="fieldSize" class="mr-2 w-24 flex-shrink-0">フィールドサイズ:</span>
+                                <input type="number" id="canvas-width" class="w-full p-1 border rounded">
+                                <span class="mx-1">x</span>
+                                <input type="number" id="canvas-height" class="w-full p-1 border rounded">
+                                <span class="ml-1">px</span>
+                            </div>
+                            <label class="block text-sm"><span data-lang="bgColor">背景色</span>: <input type="color" id="canvas-bg-color" class="align-middle"></label>
+                            <label class="block text-sm flex items-center">
+                                <input type="checkbox" id="show-grid" class="mr-2 rounded">
+                                <span data-lang="showGrid">格子模様を表示</span>
+                            </label>
+                            <div>
+                                <label class="block text-sm mb-1" data-lang="bgImage">背景画像:</label>
+                                <div id="bg-image-drop-zone" class="border-2 border-dashed rounded-md p-4 text-center cursor-pointer hover:bg-gray-50">
+                                    <span data-lang="dropBgImage">ここに画像をドロップ</span>
+                                </div>
+                                <button id="remove-bg-image-btn" class="hidden mt-2 w-full text-sm bg-red-500 text-white py-1 rounded hover:bg-red-600" data-lang="removeBgImage">背景画像を削除</button>
+                            </div>
+                            <div id="bg-image-controls" class="hidden space-y-2 pt-2">
+                                <label class="block text-sm"><span data-lang="bgImageOpacity">画像透過度</span>: <input type="range" id="bg-image-opacity" min="0" max="1" step="0.05" class="w-full"></label>
+                                <label class="block text-sm"><span data-lang="bgImageScale">拡大率</span>: <input type="range" id="bg-image-scale" min="0.1" max="3" step="0.1" class="w-full"></label>
+                                <label class="block text-sm"><span data-lang="bgImagePosition">位置 (X/Y)</span>: <input type="range" id="bg-image-pos-x" min="-100" max="100" step="1" class="w-full"> <input type="range" id="bg-image-pos-y" min="-100" max="100" step="1" class="w-full"></label>
+                            </div>
+                            <button id="reset-canvas-settings-btn" class="w-full mt-2 text-sm bg-orange-500 text-white py-1 rounded hover:bg-orange-600" data-lang="resetSectionSettings">この設定をリセット</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tile Settings Accordion -->
+                <div class="accordion-item border rounded-md">
+                     <h3 class="accordion-toggle flex justify-between items-center w-full font-semibold cursor-pointer p-2 bg-gray-50">
+                        <span data-lang="tileSettings">タイル設定</span>
+                        <svg class="accordion-arrow w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </h3>
+                    <div class="accordion-content">
+                        <div class="p-3 space-y-3">
+                            <div class="flex items-center text-sm">
+                                <span data-lang="tileSize" class="mr-2 w-24 flex-shrink-0">サイズ (W x H):</span>
+                                <input type="number" id="tile-width" class="w-full p-1 border rounded">
+                                <span class="mx-1">x</span>
+                                <input type="number" id="tile-height" class="w-full p-1 border rounded">
+                                <span class="ml-1">px</span>
+                            </div>
+                            <label class="block text-sm"><span data-lang="tileBgColor">背景色</span>: <input type="color" id="tile-bg-color" class="align-middle"></label>
+                            <label class="block text-sm"><span data-lang="tileBgOpacity">背景透過度</span>: <input type="range" id="tile-bg-opacity" min="0" max="1" step="0.05" class="w-full"></label>
+                            <label class="block text-sm"><span data-lang="borderColor">枠の色</span>: <input type="color" id="tile-border-color" class="align-middle"></label>
+                            <label class="block text-sm"><span data-lang="borderWidth">枠の幅</span>: <input type="range" id="tile-border-width" min="0" max="20" step="1" class="w-full"></label>
+                            <label class="block text-sm"><span data-lang="borderRadius">枠の丸み</span>: <input type="range" id="tile-border-radius" min="0" max="50" step="1" class="w-full"></label>
+                            <label class="block text-sm"><span data-lang="tileMargin">タイル間隔</span>: <input type="range" id="tile-margin" min="0" max="50" step="1" class="w-full"></label>
+                            <button id="reset-tile-settings-btn" class="w-full mt-2 text-sm bg-orange-500 text-white py-1 rounded hover:bg-orange-600" data-lang="resetSectionSettings">この設定をリセット</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Adjust Panel -->
+            <div id="adjust-panel" class="panel-content space-y-4 hidden">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h2 class="text-lg font-bold" data-lang="adjustTitle">画像調整</h2>
+                    <button class="back-to-settings-btn text-sm bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded" data-lang="backToSettings">設定に戻る</button>
+                </div>
+                <div class="space-y-2 p-2 border rounded-md">
+                    <label class="block text-sm"><span data-lang="imageOpacity">画像透過度</span>: <input type="range" id="image-opacity" min="0" max="1" step="0.05" class="w-full"></label>
+                    <label class="block text-sm"><span data-lang="zoom">拡大縮小</span> (<span id="zoom-value">100</span>%): <input type="range" id="image-zoom" min="0.5" max="2" step="0.01" class="w-full"></label>
+                    <label class="block text-sm"><span data-lang="moveHorizontal">左右移動</span>: <input type="range" id="image-pos-x" min="-100" max="100" step="1" class="w-full"></label>
+                    <label class="block text-sm"><span data-lang="moveVertical">上下移動</span>: <input type="range" id="image-pos-y" min="-100" max="100" step="1" class="w-full"></label>
+                    <button id="reset-adjust-btn" class="w-full mt-2 text-sm bg-orange-500 text-white py-1 rounded hover:bg-orange-600" data-lang="resetAdjust">調整をリセット</button>
+                </div>
+            </div>
+
+            <!-- Export Panel -->
+            <div id="export-panel" class="panel-content space-y-4 hidden">
+                 <div class="flex justify-between items-center border-b pb-2">
+                    <h2 class="text-lg font-bold" data-lang="exportTitle">画像出力</h2>
+                    <button class="back-to-settings-btn text-sm bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded" data-lang="backToSettings">設定に戻る</button>
+                </div>
+                <div class="space-y-2 p-2 border rounded-md">
+                    <label class="block text-sm" for="export-format" data-lang="format">形式:</label>
+                    <select id="export-format" class="w-full p-2 border rounded">
+                        <option value="image/png">PNG</option>
+                        <option value="image/jpeg">JPEG</option>
+                    </select>
+                    <label class="block text-sm mt-2"><span data-lang="exportScale">出力スケール</span>: <span id="export-scale-value">1</span>x</label>
+                    <input type="range" id="export-scale" min="0.5" max="4" step="0.1" value="1" class="w-full">
+                    <p class="text-xs text-gray-500" data-lang="exportNote">出力サイズ: <span id="export-size-preview">810x810</span> px</p>
+                    <button id="export-canvas-btn" class="w-full mt-4 bg-purple-500 text-white py-2 rounded hover:bg-purple-600" data-lang="executeExport">この設定で出力</button>
+                </div>
+            </div>
+
+            <!-- Help Panel -->
+            <div id="help-panel" class="panel-content space-y-4 hidden">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h2 class="text-lg font-bold" data-lang="howToUseTitle">操作方法</h2>
+                    <button class="back-to-settings-btn text-sm bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded" data-lang="backToSettings">設定に戻る</button>
+                </div>
+                <div class="text-sm space-y-3">
+                    <p data-lang="helpP1"></p>
+                    <p data-lang="helpP2"></p>
+                    <p data-lang="helpP3"></p>
+                    <p data-lang="helpP4"></p>
+                    <p data-lang="helpP5"></p>
+                    <p data-lang="helpP6"></p>
+                    <p data-lang="helpP7"></p>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Main Canvas Area -->
+        <main class="flex-grow flex items-center justify-center p-4 bg-gray-200 overflow-auto">
+            <div id="drop-zone-wrapper" class="shadow-lg">
+                <div id="drop-zone" class="bg-white relative">
+                    <div id="bg-image-container" class="absolute inset-0 overflow-hidden">
+                        <div id="bg-image-element" class="absolute bg-no-repeat bg-center w-full h-full"></div>
+                    </div>
+                    <div id="tile-container" class="relative flex flex-wrap content-start items-start">
+                        <!-- Tiles will be appended here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg opacity-0 transition-opacity duration-300">
+        <p id="toast-message"></p>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const $ = (selector) => document.querySelector(selector);
+        const $$ = (selector) => document.querySelectorAll(selector);
+
+        const dropZone = $('#drop-zone');
+        const tileContainer = $('#tile-container');
+        const leftPanel = $('#left-panel');
+        
+        // --- State Management ---
+        let activePanel = null;
+        let activeTile = null;
+        let sortable = null;
+
+        // --- Language Data ---
+        const uiStrings = {
+            ja: {
+                appTitle: "画像放り込み一覧メーカー",
+                settings: "設定",
+                save: "保存",
+                load: "呼び出し",
+                exportImage: "画像出力",
+                howToUse: "操作方法",
+                language: "言語",
+                settingsTitle: "設定",
+                backToSettings: "設定に戻る",
+                canvasSettings: "フィールド設定",
+                fieldSize: "フィールドサイズ:",
+                bgColor: "背景色",
+                showGrid: "格子模様を表示",
+                bgImage: "背景画像",
+                dropBgImage: "ここに画像をドロップ",
+                removeBgImage: "背景画像を削除",
+                bgImageOpacity: "画像透過度",
+                bgImageScale: "拡大率",
+                bgImagePosition: "位置 (X/Y)",
+                tileSettings: "タイル設定",
+                tileSize: "サイズ (W x H):",
+                tileBgColor: "背景色",
+                tileBgOpacity: "背景透過度",
+                borderColor: "枠の色",
+                borderWidth: "枠の幅",
+                borderRadius: "枠の丸み",
+                tileMargin: "タイル間隔",
+                resetSectionSettings: "この設定をリセット",
+                adjustTitle: "画像調整",
+                imageOpacity: "画像透過度",
+                zoom: "拡大縮小",
+                moveHorizontal: "左右移動",
+                moveVertical: "上下移動",
+                resetAdjust: "調整をリセット",
+                exportTitle: "画像出力",
+                format: "形式",
+                exportScale: "出力スケール",
+                exportNote: "出力サイズ:",
+                executeExport: "この設定で出力",
+                howToUseTitle: "操作方法",
+                helpP1: "<strong>画像追加</strong>: PC上の画像ファイルを右側のフィールドにドラッグ＆ドロップします。",
+                helpP2: "<strong>順序変更</strong>: フィールド上のタイルをドラッグ＆ドロップして、順序を入れ替えます。",
+                helpP3: "<strong>タイル削除</strong>: タイルにマウスを乗せると右上に表示される<span class='inline-flex items-center justify-center bg-black text-white rounded-full w-4 h-4 text-xs'>×</span>ボタンで削除します。",
+                helpP4: "<strong>画像調整</strong>: タイルをダブルクリックすると、左パネルに調整メニューが表示されます。調整後、「設定に戻る」でメインの設定画面に戻ります。",
+                helpP5: "<strong>各種設定</strong>: この画面でフィールドやタイルの見た目を変更できます。",
+                helpP6: "<strong>保存と呼び出し</strong>: 「保存」ボタンで現在の状態をファイル(.json)に保存します。「呼び出し」ボタンでファイルを読み込んで復元できます。",
+                helpP7: "<strong>画像出力</strong>: 上部の「画像出力」ボタンで、現在のフィールドを一枚の画像として保存できます。",
+                toastSettingsSaved: "設定を保存しました。",
+                toastStateSaved: "状態をファイルに保存しました。",
+                toastStateLoaded: "状態を読み込みました。",
+                toastLoadError: "ファイルの読み込みに失敗しました。",
+                toastImageExported: "画像を出力しました。",
+                toastSettingsReset: "設定をリセットしました。",
+                toastPanelClosed: "パネルを閉じました",
+                toastPanelOpened: "パネルを開きました",
+            },
+            en: {
+                appTitle: "Image Tile Layout Maker",
+                settings: "Settings",
+                save: "Save",
+                load: "Load",
+                exportImage: "Export Image",
+                howToUse: "How to Use",
+                language: "Language",
+                settingsTitle: "Settings",
+                backToSettings: "Back to Settings",
+                canvasSettings: "Canvas Settings",
+                fieldSize: "Field Size:",
+                bgColor: "Background Color",
+                showGrid: "Show Grid Pattern",
+                bgImage: "Background Image",
+                dropBgImage: "Drop image here",
+                removeBgImage: "Remove BG Image",
+                bgImageOpacity: "Image Opacity",
+                bgImageScale: "Scale",
+                bgImagePosition: "Position (X/Y)",
+                tileSettings: "Tile Settings",
+                tileSize: "Size (W x H):",
+                tileBgColor: "Background Color",
+                tileBgOpacity: "BG Opacity",
+                borderColor: "Border Color",
+                borderWidth: "Border Width",
+                borderRadius: "Border Radius",
+                tileMargin: "Tile Margin",
+                resetSectionSettings: "Reset these settings",
+                adjustTitle: "Image Adjustment",
+                imageOpacity: "Image Opacity",
+                zoom: "Zoom",
+                moveHorizontal: "Horizontal",
+                moveVertical: "Vertical",
+                resetAdjust: "Reset Adjustments",
+                exportTitle: "Export Image",
+                format: "Format",
+                exportScale: "Export Scale",
+                exportNote: "Output size:",
+                executeExport: "Export with this setting",
+                howToUseTitle: "How to Use",
+                helpP1: "<strong>Add Images</strong>: Drag and drop image files from your computer onto the field on the right.",
+                helpP2: "<strong>Reorder Tiles</strong>: Drag and drop tiles on the field to reorder them.",
+                helpP3: "<strong>Delete a Tile</strong>: Delete a tile by clicking the <span class='inline-flex items-center justify-center bg-black text-white rounded-full w-4 h-4 text-xs'>×</span> button that appears on the top right when you hover over it.",
+                helpP4: "<strong>Adjust an Image</strong>: Double-click a tile to open the adjustment menu in the left panel. After adjusting, click 'Back to Settings' to return.",
+                helpP5: "<strong>Customize</strong>: You can change the appearance of the field and tiles on this screen.",
+                helpP6: "<strong>Save & Load</strong>: Save the current state to a file (.json) with the 'Save' button. Load a file to restore your work with the 'Load' button.",
+                helpP7: "<strong>Export as Image</strong>: Export the current field as a single image using the 'Export Image' button at the top.",
+                toastSettingsSaved: "Settings saved.",
+                toastStateSaved: "State saved to file.",
+                toastStateLoaded: "State loaded.",
+                toastLoadError: "Failed to load file.",
+                toastImageExported: "Image exported.",
+                toastSettingsReset: "Settings reset.",
+                toastPanelClosed: "Panel closed",
+                toastPanelOpened: "Panel opened",
+            }
+        };
+        let currentLang = 'ja';
+
+        // --- Default Settings ---
+        const defaultCanvasSettings = {
+            canvasWidth: 810,
+            canvasHeight: 810,
+            canvasBgColor: '#FFFFFF',
+            showGrid: false,
+            bgImage: null,
+            bgImageOpacity: 1.0,
+            bgImageScale: 1.0,
+            bgImagePosX: 0,
+            bgImagePosY: 0,
+        };
+        const defaultTileSettings = {
+            tileWidth: 162,
+            tileHeight: 162,
+            tileBgColor: '#FFFFFF',
+            tileBgOpacity: 1.0,
+            tileBorderColor: '#000000',
+            tileBorderWidth: 2,
+            tileBorderRadius: 8,
+            tileMargin: 0,
+        };
+        const defaultSettings = { ...defaultCanvasSettings, ...defaultTileSettings };
+        let settings = { ...defaultSettings };
+
+        // --- Utility Functions ---
+        const showToast = (messageKey) => {
+            const toast = $('#toast');
+            const message = uiStrings[currentLang][messageKey] || messageKey;
+            $('#toast-message').textContent = message;
+            toast.style.opacity = 1;
+            setTimeout(() => {
+                toast.style.opacity = 0;
+            }, 3000);
+        };
+        
+        const hexToRgba = (hex, alpha) => {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        };
+
+        // --- Language Switcher ---
+        const updateLanguage = (lang) => {
+            currentLang = lang;
+            const langBtn = $('#language-toggle-btn');
+            $$('[data-lang]').forEach(el => {
+                const key = el.dataset.lang;
+                if (uiStrings[lang][key]) {
+                    // Use innerHTML to render strong tags in help text
+                    if(key.startsWith('helpP')) {
+                        el.innerHTML = uiStrings[lang][key];
+                    } else {
+                        el.textContent = uiStrings[lang][key];
+                    }
+                }
+            });
+            if (lang === 'ja') {
+                langBtn.textContent = 'English';
+            } else {
+                langBtn.textContent = '日本語';
+            }
+        };
+
+        const toggleLanguage = () => {
+            const newLang = currentLang === 'ja' ? 'en' : 'ja';
+            updateLanguage(newLang);
+        };
+
+        // --- Accordion Helper ---
+        const updateOpenAccordions = () => {
+            $$('.accordion-content').forEach(content => {
+                if (content.style.maxHeight !== '0px') {
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                }
+            });
+        };
+
+        // --- Settings Application ---
+        const applySettings = () => {
+            // Canvas
+            dropZone.style.width = `${settings.canvasWidth}px`;
+            dropZone.style.height = `${settings.canvasHeight}px`;
+            dropZone.style.backgroundColor = settings.canvasBgColor;
+            
+            // Grid
+            if (settings.showGrid) {
+                dropZone.classList.add('drop-zone-bg');
+            } else {
+                dropZone.classList.remove('drop-zone-bg');
+            }
+
+            // Background Image
+            const bgImageElement = $('#bg-image-element');
+            if (settings.bgImage) {
+                bgImageElement.style.backgroundImage = `url(${settings.bgImage})`;
+                bgImageElement.style.opacity = settings.bgImageOpacity;
+                const scale = settings.bgImageScale;
+                const posX = settings.bgImagePosX;
+                const posY = settings.bgImagePosY;
+                bgImageElement.style.transform = `scale(${scale}) translate(${posX}%, ${posY}%)`;
+                $('#remove-bg-image-btn').classList.remove('hidden');
+                $('#bg-image-controls').classList.remove('hidden');
+            } else {
+                bgImageElement.style.backgroundImage = 'none';
+                $('#remove-bg-image-btn').classList.add('hidden');
+                $('#bg-image-controls').classList.add('hidden');
+            }
+
+            // Tiles
+            tileContainer.style.gap = `${settings.tileMargin}px`;
+            $$('.tile').forEach(tile => {
+                tile.style.width = `${settings.tileWidth}px`;
+                tile.style.height = `${settings.tileHeight}px`;
+                tile.style.backgroundColor = hexToRgba(settings.tileBgColor, settings.tileBgOpacity);
+                tile.style.border = `${settings.tileBorderWidth}px solid ${settings.tileBorderColor}`;
+                tile.style.borderRadius = `${settings.tileBorderRadius}px`;
+                
+                const img = tile.querySelector('img');
+                if (img) {
+                    const padding = settings.tileBorderWidth;
+                    img.style.padding = `${padding}px`;
+                    if (img.complete) {
+                        fitImageInTile(img);
+                    }
+                }
+            });
+            updateExportPreview();
+            // Recalculate accordion height in case controls were shown/hidden
+            setTimeout(updateOpenAccordions, 50);
+        };
+
+        const updateUIFromSettings = () => {
+            Object.keys(settings).forEach(key => {
+                const elId = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+                const element = $(`#${elId}`);
+                if (element) {
+                    if (element.type === 'checkbox') {
+                        element.checked = settings[key];
+                    } else {
+                        element.value = settings[key];
+                    }
+                }
+            });
+        };
+        
+        const saveSettings = () => {
+            localStorage.setItem('imageTileMakerSettings', JSON.stringify(settings));
+            showToast('toastSettingsSaved');
+        };
+
+        const loadSettings = () => {
+            const saved = localStorage.getItem('imageTileMakerSettings');
+            if (saved) {
+                settings = { ...defaultSettings, ...JSON.parse(saved) };
+            }
+            updateUIFromSettings();
+            applySettings();
+        };
+
+        // --- Panel Management ---
+        const openPanel = (panelId) => {
+            if (activePanel === panelId && panelId !== 'settings-panel') {
+                leftPanel.classList.add('-translate-x-full');
+                $$('.panel-button').forEach(b => {
+                    b.classList.remove('active-green', 'active-purple');
+                });
+                activePanel = null;
+                openPanel('settings-panel');
+                return;
+            }
+
+            leftPanel.classList.remove('-translate-x-full');
+            $$('.panel-content').forEach(p => p.classList.add('hidden'));
+            $(`#${panelId}`).classList.remove('hidden');
+
+            $$('.panel-button').forEach(b => {
+                b.classList.remove('active-green', 'active-purple');
+            });
+
+            if (panelId !== 'settings-panel' && panelId !== 'adjust-panel') {
+                const button = $(`#${panelId.split('-')[0]}-btn`);
+                if (button) {
+                    if (panelId === 'export-panel') {
+                        button.classList.add('active-purple');
+                    } else if (panelId === 'help-panel') {
+                        button.classList.add('active-green');
+                    }
+                }
+            }
+            
+            activePanel = panelId;
+            if(panelId !== 'adjust-panel') showToast('toastPanelOpened');
+        };
+
+        // --- Tile Creation and Management ---
+        const fitImageInTile = (img) => {
+            const tileAspectRatio = settings.tileWidth / settings.tileHeight;
+            const imgAspectRatio = img.naturalWidth / img.naturalHeight;
+
+            if (imgAspectRatio > tileAspectRatio) {
+                img.style.width = '100%';
+                img.style.height = 'auto';
+            } else {
+                img.style.width = 'auto';
+                img.style.height = '100%';
+            }
+        };
+
+        const createTile = (imgSrc, adjustments = { zoom: 1, posX: 0, posY: 0, opacity: 1 }) => {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.dataset.id = Date.now() + Math.random();
+
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.dataset.zoom = adjustments.zoom;
+            img.dataset.posX = adjustments.posX;
+            img.dataset.posY = adjustments.posY;
+            img.dataset.opacity = adjustments.opacity;
+
+            img.onload = () => {
+                fitImageInTile(img);
+                applyImageAdjustments(img);
+            };
+
+            const deleteBtn = document.createElement('div');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                tile.remove();
+            };
+
+            tile.appendChild(img);
+            tile.appendChild(deleteBtn);
+            tileContainer.appendChild(tile);
+            
+            applySettings();
+            
+            tile.ondblclick = () => {
+                if (activeTile) {
+                    activeTile.style.boxShadow = 'none';
+                }
+                activeTile = tile;
+                activeTile.style.boxShadow = '0 0 0 3px #3b82f6';
+                updateAdjustUI(img);
+                openPanel('adjust-panel');
+            };
+        };
+
+        // --- Image Adjustment ---
+        const applyImageAdjustments = (img) => {
+            if (!img) return;
+            const zoom = img.dataset.zoom || 1;
+            const posX = img.dataset.posX || 0;
+            const posY = img.dataset.posY || 0;
+            const opacity = img.dataset.opacity || 1;
+            img.style.transform = `scale(${zoom}) translate(${posX}%, ${posY}%)`;
+            img.style.opacity = opacity;
+        };
+
+        const updateAdjustUI = (img) => {
+            const zoom = parseFloat(img.dataset.zoom || 1);
+            const posX = parseFloat(img.dataset.posX || 0);
+            const posY = parseFloat(img.dataset.posY || 0);
+            const opacity = parseFloat(img.dataset.opacity || 1);
+
+            $('#image-opacity').value = opacity;
+            $('#image-zoom').value = zoom;
+            $('#zoom-value').textContent = Math.round(zoom * 100);
+            $('#image-pos-x').value = posX;
+            $('#image-pos-y').value = posY;
+        };
+
+        // --- Drag and Drop ---
+        const initDragAndDrop = () => {
+            const zone = $('#drop-zone');
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                zone.classList.add('bg-blue-100');
+            });
+            zone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                zone.classList.remove('bg-blue-100');
+            });
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                zone.classList.remove('bg-blue-100');
+                
+                const files = e.dataTransfer.files;
+                for (const file of files) {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            createTile(event.target.result);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+            });
+            
+            const bgZone = $('#bg-image-drop-zone');
+            bgZone.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); bgZone.classList.add('bg-green-50'); });
+            bgZone.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); bgZone.classList.remove('bg-green-50'); });
+            bgZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                bgZone.classList.remove('bg-green-50');
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        settings.bgImage = event.target.result;
+                        applySettings();
+                        saveSettings();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        };
+
+        // --- SortableJS for Reordering ---
+        const initSortable = () => {
+            if (sortable) {
+                sortable.destroy();
+            }
+            sortable = new Sortable(tileContainer, {
+                animation: 150,
+                ghostClass: 'opacity-50',
+            });
+        };
+        
+        // --- Accordion ---
+        const initAccordion = () => {
+            $$('.accordion-toggle').forEach(toggle => {
+                const content = toggle.nextElementSibling;
+                const arrow = toggle.querySelector('.accordion-arrow');
+                
+                content.style.maxHeight = '0px';
+                arrow.classList.remove('rotate-180');
+
+                toggle.addEventListener('click', () => {
+                    arrow.classList.toggle('rotate-180');
+                    if (content.style.maxHeight === '0px') {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                    } else {
+                        content.style.maxHeight = '0px';
+                    }
+                });
+            });
+        };
+
+        // --- Export Functionality ---
+        const updateExportPreview = () => {
+            const scaleEl = $('#export-scale');
+            const scaleValueEl = $('#export-scale-value');
+            const sizePreviewEl = $('#export-size-preview');
+
+            if (!scaleEl || !scaleValueEl || !sizePreviewEl) {
+                return;
+            }
+
+            const scale = parseFloat(scaleEl.value);
+            const width = Math.round(settings.canvasWidth * scale);
+            const height = Math.round(settings.canvasHeight * scale);
+            sizePreviewEl.textContent = `${width}x${height}`;
+            scaleValueEl.textContent = `${scale.toFixed(1)}`;
+        };
+
+        const exportCanvas = () => {
+            if (activeTile) {
+                activeTile.style.boxShadow = 'none';
+            }
+            const scale = parseFloat($('#export-scale').value);
+            const format = $('#export-format').value;
+            const fileExtension = format.split('/')[1];
+
+            // Temporarily remove grid for export
+            const hadGrid = dropZone.classList.contains('drop-zone-bg');
+            if (hadGrid) {
+                dropZone.classList.remove('drop-zone-bg');
+            }
+
+            html2canvas(dropZone, {
+                scale: scale,
+                backgroundColor: null,
+                useCORS: true,
+                onclone: (doc) => {
+                    doc.querySelectorAll('.delete-btn').forEach(btn => btn.style.display = 'none');
+                }
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `tile-layout-${Date.now()}.${fileExtension}`;
+                link.href = canvas.toDataURL(format, 0.95);
+                link.click();
+                showToast('toastImageExported');
+                
+                // Restore grid if it was there
+                if (hadGrid) {
+                    dropZone.classList.add('drop-zone-bg');
+                }
+            });
+        };
+
+        // --- Save/Load State ---
+        const saveState = () => {
+            const state = {
+                settings: settings,
+                tiles: []
+            };
+            $$('.tile').forEach(tile => {
+                const img = tile.querySelector('img');
+                state.tiles.push({
+                    src: img.src,
+                    adjustments: {
+                        zoom: img.dataset.zoom || 1,
+                        posX: img.dataset.posX || 0,
+                        posY: img.dataset.posY || 0,
+                        opacity: img.dataset.opacity || 1,
+                    }
+                });
+            });
+
+            const dataStr = JSON.stringify(state, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = 'image-layout-state.json';
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+            showToast('toastStateSaved');
+        };
+
+        const loadState = (file) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const state = JSON.parse(e.target.result);
+                    tileContainer.innerHTML = '';
+                    settings = { ...defaultSettings, ...state.settings };
+                    updateUIFromSettings();
+                    applySettings();
+                    state.tiles.forEach(tileData => {
+                        createTile(tileData.src, tileData.adjustments);
+                    });
+                    showToast('toastStateLoaded');
+                } catch (error) {
+                    console.error("Error loading state:", error);
+                    showToast('toastLoadError');
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        // --- Event Listeners ---
+        const initEventListeners = () => {
+            $('#language-toggle-btn').addEventListener('click', toggleLanguage);
+
+            $('#export-btn').addEventListener('click', () => openPanel('export-panel'));
+            $('#help-btn').addEventListener('click', () => openPanel('help-panel'));
+            
+            $$('.back-to-settings-btn').forEach(btn => {
+                btn.addEventListener('click', () => openPanel('settings-panel'));
+            });
+
+            const inputs = [
+                'canvas-width', 'canvas-height', 'canvas-bg-color', 'show-grid',
+                'bg-image-opacity', 'bg-image-scale', 'bg-image-pos-x', 'bg-image-pos-y',
+                'tile-width', 'tile-height', 'tile-bg-color', 'tile-bg-opacity', 'tile-border-color', 'tile-border-width',
+                'tile-border-radius', 'tile-margin'
+            ];
+            inputs.forEach(id => {
+                const element = $('#' + id);
+                const eventType = (element.type === 'range' || element.type === 'color') ? 'input' : 'change';
+                element.addEventListener(eventType, (e) => {
+                    const keyMap = {
+                        'canvas-width': 'canvasWidth', 'canvas-height': 'canvasHeight',
+                        'canvas-bg-color': 'canvasBgColor', 'show-grid': 'showGrid',
+                        'bg-image-opacity': 'bgImageOpacity', 'bg-image-scale': 'bgImageScale',
+                        'bg-image-pos-x': 'bgImagePosX', 'bg-image-pos-y': 'bgImagePosY',
+                        'tile-width': 'tileWidth', 'tile-height': 'tileHeight', 'tile-bg-color': 'tileBgColor', 'tile-bg-opacity': 'tileBgOpacity',
+                        'tile-border-color': 'tileBorderColor', 'tile-border-width': 'tileBorderWidth',
+                        'tile-border-radius': 'tileBorderRadius', 'tile-margin': 'tileMargin'
+                    };
+                    const target = e.target;
+                    const value = target.type === 'checkbox' ? target.checked : (target.type === 'number' || target.type === 'range' ? parseFloat(target.value) : target.value);
+                    settings[keyMap[id]] = value;
+                    applySettings();
+                    saveSettings();
+                });
+            });
+
+            $('#remove-bg-image-btn').addEventListener('click', () => {
+                settings.bgImage = null;
+                applySettings();
+                saveSettings();
+            });
+
+            $('#reset-canvas-settings-btn').addEventListener('click', () => {
+                Object.keys(defaultCanvasSettings).forEach(key => {
+                    settings[key] = defaultCanvasSettings[key];
+                });
+                updateUIFromSettings();
+                applySettings();
+                saveSettings();
+                showToast('toastSettingsReset');
+            });
+
+            $('#reset-tile-settings-btn').addEventListener('click', () => {
+                Object.keys(defaultTileSettings).forEach(key => {
+                    settings[key] = defaultTileSettings[key];
+                });
+                updateUIFromSettings();
+                applySettings();
+                saveSettings();
+                showToast('toastSettingsReset');
+            });
+
+            ['image-zoom', 'image-pos-x', 'image-pos-y', 'image-opacity'].forEach(id => {
+                $('#' + id).addEventListener('input', (e) => {
+                    if (!activeTile) return;
+                    const img = activeTile.querySelector('img');
+                    const keyMap = { 'image-zoom': 'zoom', 'image-pos-x': 'posX', 'image-pos-y': 'posY', 'image-opacity': 'opacity' };
+                    img.dataset[keyMap[id]] = e.target.value;
+                    if (id === 'image-zoom') {
+                        $('#zoom-value').textContent = Math.round(e.target.value * 100);
+                    }
+                    applyImageAdjustments(img);
+                });
+            });
+            
+            $('#reset-adjust-btn').addEventListener('click', () => {
+                if (!activeTile) return;
+                const img = activeTile.querySelector('img');
+                img.dataset.zoom = 1;
+                img.dataset.posX = 0;
+                img.dataset.posY = 0;
+                img.dataset.opacity = 1;
+                applyImageAdjustments(img);
+                updateAdjustUI(img);
+            });
+
+            $('#export-canvas-btn').addEventListener('click', exportCanvas);
+            $('#export-scale').addEventListener('input', updateExportPreview);
+
+            $('#save-state-btn').addEventListener('click', saveState);
+            $('#load-state-btn').addEventListener('click', () => $('#load-state-input').click());
+            $('#load-state-input').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    loadState(file);
+                }
+                e.target.value = null;
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (activeTile && !leftPanel.contains(e.target) && !activeTile.contains(e.target)) {
+                    activeTile.style.boxShadow = 'none';
+                    activeTile = null;
+                    if(activePanel === 'adjust-panel') {
+                        openPanel('settings-panel');
+                    }
+                }
+            });
+        };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            updateLanguage('ja');
+            initDragAndDrop();
+            initSortable();
+            initAccordion();
+            initEventListeners();
+            openPanel('settings-panel');
+        });
+
+    </script>
+</body>
+</html>
