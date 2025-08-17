@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>画像放り込み一覧メーカー</title>
+    <link rel="icon" href="/favicon0.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SortableJS for drag-and-drop reordering -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
@@ -132,10 +133,6 @@
                                 <span class="ml-1">px</span>
                             </div>
                             <label class="block text-sm"><span data-lang="bgColor">背景色</span>: <input type="color" id="canvas-bg-color" class="align-middle"></label>
-                            <label class="block text-sm flex items-center">
-                                <input type="checkbox" id="show-grid" class="mr-2 rounded">
-                                <span data-lang="showGrid">格子模様を表示</span>
-                            </label>
                             <div>
                                 <label class="block text-sm mb-1" data-lang="bgImage">背景画像:</label>
                                 <div id="bg-image-drop-zone" class="border-2 border-dashed rounded-md p-4 text-center cursor-pointer hover:bg-gray-50">
@@ -146,9 +143,9 @@
                             <div id="bg-image-controls" class="hidden space-y-2 pt-2">
                                 <label class="block text-sm"><span data-lang="bgImageOpacity">画像透過度</span>: <input type="range" id="bg-image-opacity" min="0" max="1" step="0.05" class="w-full"></label>
                                 <label class="block text-sm"><span data-lang="bgImageScale">拡大率</span>: <input type="range" id="bg-image-scale" min="0.1" max="3" step="0.1" class="w-full"></label>
-                                <label class="block text-sm"><span data-lang="bgImagePosition">位置 (X/Y)</span>: <input type="range" id="bg-image-pos-x" min="-100" max="100" step="1" class="w-full"> <input type="range" id="bg-image-pos-y" min="-100" max="100" step="1" class="w-full"></label>
+                                <label class="block text-sm"><span data-lang="bgImagePosition">位置（横/縦）</span>: <input type="range" id="bg-image-pos-x" min="-100" max="100" step="1" class="w-full"> <input type="range" id="bg-image-pos-y" min="-100" max="100" step="1" class="w-full"></label>
                             </div>
-                            <button id="reset-canvas-settings-btn" class="w-full mt-2 text-sm bg-orange-500 text-white py-1 rounded hover:bg-orange-600" data-lang="resetSectionSettings">この設定をリセット</button>
+                            <button id="reset-canvas-settings-btn" class="w-full mt-2 text-sm bg-orange-500 text-white py-1 rounded hover:bg-orange-600" data-lang="resetSectionSettings">設定をリセット</button>
                         </div>
                     </div>
                 </div>
@@ -168,13 +165,17 @@
                                 <input type="number" id="tile-height" class="w-full p-1 border rounded">
                                 <span class="ml-1">px</span>
                             </div>
-                            <label class="block text-sm"><span data-lang="tileBgColor">背景色</span>: <input type="color" id="tile-bg-color" class="align-middle"></label>
-                            <label class="block text-sm"><span data-lang="tileBgOpacity">背景透過度</span>: <input type="range" id="tile-bg-opacity" min="0" max="1" step="0.05" class="w-full"></label>
-                            <label class="block text-sm"><span data-lang="borderColor">枠の色</span>: <input type="color" id="tile-border-color" class="align-middle"></label>
-                            <label class="block text-sm"><span data-lang="borderWidth">枠の幅</span>: <input type="range" id="tile-border-width" min="0" max="20" step="1" class="w-full"></label>
+                            <div class="flex items-center text-sm">
+                                <label class="flex-shrink-0 mr-2"><span data-lang="tileBgColor">背景色</span>: <input type="color" id="tile-bg-color" class="align-middle"></label>
+                                <label class="w-full"><span data-lang="tileBgOpacity" class="sr-only">背景透過度</span><input type="range" id="tile-bg-opacity" min="0" max="1" step="0.05" class="w-full"></label>
+                            </div>
+                             <div class="flex items-center text-sm">
+                                <label class="flex-shrink-0 mr-2"><span data-lang="borderColor">枠の色</span>: <input type="color" id="tile-border-color" class="align-middle"></label>
+                                <label class="w-full"><span data-lang="borderWidth" class="sr-only">枠の幅</span><input type="range" id="tile-border-width" min="0" max="20" step="1" class="w-full"></label>
+                            </div>
                             <label class="block text-sm"><span data-lang="borderRadius">枠の丸み</span>: <input type="range" id="tile-border-radius" min="0" max="50" step="1" class="w-full"></label>
                             <label class="block text-sm"><span data-lang="tileMargin">タイル間隔</span>: <input type="range" id="tile-margin" min="0" max="50" step="1" class="w-full"></label>
-                            <button id="reset-tile-settings-btn" class="w-full mt-2 text-sm bg-orange-500 text-white py-1 rounded hover:bg-orange-600" data-lang="resetSectionSettings">この設定をリセット</button>
+                            <button id="reset-tile-settings-btn" class="w-full mt-2 text-sm bg-orange-500 text-white py-1 rounded hover:bg-orange-600" data-lang="resetSectionSettings">設定をリセット</button>
                         </div>
                     </div>
                 </div>
@@ -189,8 +190,7 @@
                 <div class="space-y-2 p-2 border rounded-md">
                     <label class="block text-sm"><span data-lang="imageOpacity">画像透過度</span>: <input type="range" id="image-opacity" min="0" max="1" step="0.05" class="w-full"></label>
                     <label class="block text-sm"><span data-lang="zoom">拡大縮小</span> (<span id="zoom-value">100</span>%): <input type="range" id="image-zoom" min="0.5" max="2" step="0.01" class="w-full"></label>
-                    <label class="block text-sm"><span data-lang="moveHorizontal">左右移動</span>: <input type="range" id="image-pos-x" min="-100" max="100" step="1" class="w-full"></label>
-                    <label class="block text-sm"><span data-lang="moveVertical">上下移動</span>: <input type="range" id="image-pos-y" min="-100" max="100" step="1" class="w-full"></label>
+                    <label class="block text-sm"><span data-lang="imagePosition">位置（横/縦）</span>: <input type="range" id="image-pos-x" min="-100" max="100" step="1" class="w-full"> <input type="range" id="image-pos-y" min="-100" max="100" step="1" class="w-full"></label>
                     <button id="reset-adjust-btn" class="w-full mt-2 text-sm bg-orange-500 text-white py-1 rounded hover:bg-orange-600" data-lang="resetAdjust">調整をリセット</button>
                 </div>
             </div>
@@ -207,9 +207,7 @@
                         <option value="image/png">PNG</option>
                         <option value="image/jpeg">JPEG</option>
                     </select>
-                    <label class="block text-sm mt-2"><span data-lang="exportScale">出力スケール</span>: <span id="export-scale-value">1</span>x</label>
-                    <input type="range" id="export-scale" min="0.5" max="4" step="0.1" value="1" class="w-full">
-                    <p class="text-xs text-gray-500" data-lang="exportNote">出力サイズ: <span id="export-size-preview">810x810</span> px</p>
+                    <p class="text-xs text-gray-500 mt-2"><span data-lang="exportNote">出力サイズ</span>: <span id="export-size-preview">810x810 px</span></p>
                     <button id="export-canvas-btn" class="w-full mt-4 bg-purple-500 text-white py-2 rounded hover:bg-purple-600" data-lang="executeExport">この設定で出力</button>
                 </div>
             </div>
@@ -228,6 +226,7 @@
                     <p data-lang="helpP5"></p>
                     <p data-lang="helpP6"></p>
                     <p data-lang="helpP7"></p>
+                    <p data-lang="helpP8"></p>
                 </div>
             </div>
 
@@ -266,6 +265,9 @@
         let activePanel = null;
         let activeTile = null;
         let sortable = null;
+        let historyStack = [];
+        let historyIndex = -1;
+        let isRestoringState = false;
 
         // --- Language Data ---
         const uiStrings = {
@@ -282,13 +284,12 @@
                 canvasSettings: "フィールド設定",
                 fieldSize: "フィールドサイズ:",
                 bgColor: "背景色",
-                showGrid: "格子模様を表示",
                 bgImage: "背景画像",
                 dropBgImage: "ここに画像をドロップ",
                 removeBgImage: "背景画像を削除",
                 bgImageOpacity: "画像透過度",
                 bgImageScale: "拡大率",
-                bgImagePosition: "位置 (X/Y)",
+                bgImagePosition: "位置（横/縦）",
                 tileSettings: "タイル設定",
                 tileSize: "サイズ (W x H):",
                 tileBgColor: "背景色",
@@ -297,34 +298,33 @@
                 borderWidth: "枠の幅",
                 borderRadius: "枠の丸み",
                 tileMargin: "タイル間隔",
-                resetSectionSettings: "この設定をリセット",
+                resetSectionSettings: "設定をリセット",
                 adjustTitle: "画像調整",
                 imageOpacity: "画像透過度",
                 zoom: "拡大縮小",
-                moveHorizontal: "左右移動",
-                moveVertical: "上下移動",
+                imagePosition: "位置（横/縦）",
                 resetAdjust: "調整をリセット",
                 exportTitle: "画像出力",
                 format: "形式",
-                exportScale: "出力スケール",
-                exportNote: "出力サイズ:",
+                exportNote: "出力サイズ",
                 executeExport: "この設定で出力",
                 howToUseTitle: "操作方法",
-                helpP1: "<strong>画像追加</strong>: PC上の画像ファイルを右側のフィールドにドラッグ＆ドロップします。",
-                helpP2: "<strong>順序変更</strong>: フィールド上のタイルをドラッグ＆ドロップして、順序を入れ替えます。",
-                helpP3: "<strong>タイル削除</strong>: タイルにマウスを乗せると右上に表示される<span class='inline-flex items-center justify-center bg-black text-white rounded-full w-4 h-4 text-xs'>×</span>ボタンで削除します。",
-                helpP4: "<strong>画像調整</strong>: タイルをダブルクリックすると、左パネルに調整メニューが表示されます。調整後、「設定に戻る」でメインの設定画面に戻ります。",
-                helpP5: "<strong>各種設定</strong>: この画面でフィールドやタイルの見た目を変更できます。",
-                helpP6: "<strong>保存と呼び出し</strong>: 「保存」ボタンで現在の状態をファイル(.json)に保存します。「呼び出し」ボタンでファイルを読み込んで復元できます。",
-                helpP7: "<strong>画像出力</strong>: 上部の「画像出力」ボタンで、現在のフィールドを一枚の画像として保存できます。",
+                helpP1: "<strong>設定変更</strong>: 左の設定パネルから変更できます。変更した設定はアプリを閉じても維持されます（ただし「保存」ボタンでDL推奨です）。",
+                helpP2: "<strong>画像追加</strong>: PC上の画像ファイルを右側のフィールドにドラッグ＆ドロップします。画像は分かりやすいフォルダにまとめておきましょう。",
+                helpP3: "<strong>並び替え</strong>: フィールド上のタイルはドラッグ＆ドロップで順序を入れ替えられます。",
+                helpP4: "<strong>タイル編集</strong>: タイルをダブルクリックすると、左パネルに調整メニューが表示されます。調整後、「設定に戻る」で設定パネルに戻ります。",
+                helpP5: "<strong>タイル削除</strong>: タイルにマウスを乗せると右上に表示される×ボタンで削除します。",
+                helpP6: "<strong>保存と呼び出し</strong>: 「保存」ボタンで現在の状態をファイル(.json)に保存（ダウンロード）します。「呼び出し」ボタンでファイルを読み込んで復元できます。",
+                helpP7: "<strong>画像出力</strong>: 上部の「画像出力」ボタンで、現在のフィールドを一枚の画像として保存（ダウンロード）できます。",
+                helpP8: "<strong>元に戻す/やり直す</strong>: 操作を間違えた場合は、キーボードのショートカット(Ctrl+Z)で元に戻せます。元に戻した操作をやり直すには(Ctrl+Y)を押します。",
                 toastSettingsSaved: "設定を保存しました。",
                 toastStateSaved: "状態をファイルに保存しました。",
                 toastStateLoaded: "状態を読み込みました。",
                 toastLoadError: "ファイルの読み込みに失敗しました。",
                 toastImageExported: "画像を出力しました。",
                 toastSettingsReset: "設定をリセットしました。",
-                toastPanelClosed: "パネルを閉じました",
-                toastPanelOpened: "パネルを開きました",
+                toastUndo: "元に戻しました。",
+                toastRedo: "やり直しました。",
             },
             en: {
                 appTitle: "Image Tile Layout Maker",
@@ -339,13 +339,12 @@
                 canvasSettings: "Canvas Settings",
                 fieldSize: "Field Size:",
                 bgColor: "Background Color",
-                showGrid: "Show Grid Pattern",
                 bgImage: "Background Image",
                 dropBgImage: "Drop image here",
                 removeBgImage: "Remove BG Image",
                 bgImageOpacity: "Image Opacity",
                 bgImageScale: "Scale",
-                bgImagePosition: "Position (X/Y)",
+                bgImagePosition: "Position (H/V)",
                 tileSettings: "Tile Settings",
                 tileSize: "Size (W x H):",
                 tileBgColor: "Background Color",
@@ -354,34 +353,33 @@
                 borderWidth: "Border Width",
                 borderRadius: "Border Radius",
                 tileMargin: "Tile Margin",
-                resetSectionSettings: "Reset these settings",
+                resetSectionSettings: "Reset Settings",
                 adjustTitle: "Image Adjustment",
                 imageOpacity: "Image Opacity",
                 zoom: "Zoom",
-                moveHorizontal: "Horizontal",
-                moveVertical: "Vertical",
+                imagePosition: "Position (H/V)",
                 resetAdjust: "Reset Adjustments",
                 exportTitle: "Export Image",
                 format: "Format",
-                exportScale: "Export Scale",
-                exportNote: "Output size:",
+                exportNote: "Output size",
                 executeExport: "Export with this setting",
                 howToUseTitle: "How to Use",
-                helpP1: "<strong>Add Images</strong>: Drag and drop image files from your computer onto the field on the right.",
-                helpP2: "<strong>Reorder Tiles</strong>: Drag and drop tiles on the field to reorder them.",
-                helpP3: "<strong>Delete a Tile</strong>: Delete a tile by clicking the <span class='inline-flex items-center justify-center bg-black text-white rounded-full w-4 h-4 text-xs'>×</span> button that appears on the top right when you hover over it.",
-                helpP4: "<strong>Adjust an Image</strong>: Double-click a tile to open the adjustment menu in the left panel. After adjusting, click 'Back to Settings' to return.",
-                helpP5: "<strong>Customize</strong>: You can change the appearance of the field and tiles on this screen.",
-                helpP6: "<strong>Save & Load</strong>: Save the current state to a file (.json) with the 'Save' button. Load a file to restore your work with the 'Load' button.",
-                helpP7: "<strong>Export as Image</strong>: Export the current field as a single image using the 'Export Image' button at the top.",
+                helpP1: "<strong>Settings</strong>: You can change settings from the left panel. Your settings are saved even if you close the app (but downloading with the 'Save' button is recommended).",
+                helpP2: "<strong>Add Images</strong>: Drag and drop image files from your computer onto the field on the right. It's a good idea to keep your images in a folder that's easy to find.",
+                helpP3: "<strong>Reorder</strong>: Tiles on the field can be reordered by dragging and dropping.",
+                helpP4: "<strong>Edit Tile</strong>: Double-click a tile to open the adjustment menu in the left panel. After adjusting, click 'Back to Settings' to return to the settings panel.",
+                helpP5: "<strong>Delete Tile</strong>: Delete a tile by clicking the × button that appears on the top right when you hover over it.",
+                helpP6: "<strong>Save & Load</strong>: Save (download) the current state to a file (.json) with the 'Save' button. Load a file to restore your work with the 'Load' button.",
+                helpP7: "<strong>Export as Image</strong>: Save (download) the current field as a single image using the 'Export Image' button at the top.",
+                helpP8: "<strong>Undo/Redo</strong>: If you make a mistake, you can undo it with the keyboard shortcut (Ctrl+Z). To redo an undone action, press (Ctrl+Y).",
                 toastSettingsSaved: "Settings saved.",
                 toastStateSaved: "State saved to file.",
                 toastStateLoaded: "State loaded.",
                 toastLoadError: "Failed to load file.",
                 toastImageExported: "Image exported.",
                 toastSettingsReset: "Settings reset.",
-                toastPanelClosed: "Panel closed",
-                toastPanelOpened: "Panel opened",
+                toastUndo: "Undone.",
+                toastRedo: "Redone.",
             }
         };
         let currentLang = 'ja';
@@ -391,7 +389,6 @@
             canvasWidth: 810,
             canvasHeight: 810,
             canvasBgColor: '#FFFFFF',
-            showGrid: false,
             bgImage: null,
             bgImageOpacity: 1.0,
             bgImageScale: 1.0,
@@ -419,7 +416,7 @@
             toast.style.opacity = 1;
             setTimeout(() => {
                 toast.style.opacity = 0;
-            }, 3000);
+            }, 2000);
         };
         
         const hexToRgba = (hex, alpha) => {
@@ -467,19 +464,10 @@
 
         // --- Settings Application ---
         const applySettings = () => {
-            // Canvas
             dropZone.style.width = `${settings.canvasWidth}px`;
             dropZone.style.height = `${settings.canvasHeight}px`;
             dropZone.style.backgroundColor = settings.canvasBgColor;
-            
-            // Grid
-            if (settings.showGrid) {
-                dropZone.classList.add('drop-zone-bg');
-            } else {
-                dropZone.classList.remove('drop-zone-bg');
-            }
 
-            // Background Image
             const bgImageElement = $('#bg-image-element');
             if (settings.bgImage) {
                 bgImageElement.style.backgroundImage = `url(${settings.bgImage})`;
@@ -496,7 +484,6 @@
                 $('#bg-image-controls').classList.add('hidden');
             }
 
-            // Tiles
             tileContainer.style.gap = `${settings.tileMargin}px`;
             $$('.tile').forEach(tile => {
                 tile.style.width = `${settings.tileWidth}px`;
@@ -515,7 +502,6 @@
                 }
             });
             updateExportPreview();
-            // Recalculate accordion height in case controls were shown/hidden
             setTimeout(updateOpenAccordions, 50);
         };
 
@@ -535,7 +521,6 @@
         
         const saveSettings = () => {
             localStorage.setItem('imageTileMakerSettings', JSON.stringify(settings));
-            showToast('toastSettingsSaved');
         };
 
         const loadSettings = () => {
@@ -545,6 +530,67 @@
             }
             updateUIFromSettings();
             applySettings();
+        };
+
+        // --- History (Undo/Redo) Management ---
+        const captureState = () => {
+            if (isRestoringState) return;
+            const state = {
+                settings: JSON.parse(JSON.stringify(settings)),
+                tiles: []
+            };
+            $$('.tile').forEach(tile => {
+                const img = tile.querySelector('img');
+                state.tiles.push({
+                    src: img.src,
+                    adjustments: {
+                        zoom: img.dataset.zoom || 1,
+                        posX: img.dataset.posX || 0,
+                        posY: img.dataset.posY || 0,
+                        opacity: img.dataset.opacity || 1,
+                    }
+                });
+            });
+
+            if (historyIndex < historyStack.length - 1) {
+                historyStack = historyStack.slice(0, historyIndex + 1);
+            }
+            historyStack.push(state);
+            historyIndex++;
+        };
+
+        let captureTimeout;
+        const debouncedCaptureState = () => {
+            clearTimeout(captureTimeout);
+            captureTimeout = setTimeout(captureState, 400);
+        };
+
+        const restoreState = (state) => {
+            isRestoringState = true;
+            tileContainer.innerHTML = '';
+            settings = JSON.parse(JSON.stringify(state.settings));
+            updateUIFromSettings();
+            state.tiles.forEach(tileData => {
+                createTile(tileData.src, tileData.adjustments);
+            });
+            applySettings();
+            isRestoringState = false;
+        };
+
+        const undo = () => {
+            if (historyIndex > 0) {
+                historyIndex--;
+                restoreState(historyStack[historyIndex]);
+                showToast('toastUndo');
+            }
+        };
+
+        const redo = () => {
+            if (historyIndex < historyStack.length - 1) {
+                historyIndex++;
+                restoreState(historyStack[historyIndex]);
+                showToast('toastRedo');
+            }
         };
 
         // --- Panel Management ---
@@ -579,7 +625,6 @@
             }
             
             activePanel = panelId;
-            if(panelId !== 'adjust-panel') showToast('toastPanelOpened');
         };
 
         // --- Tile Creation and Management ---
@@ -619,13 +664,17 @@
             deleteBtn.onclick = (e) => {
                 e.stopPropagation();
                 tile.remove();
+                captureState();
             };
 
             tile.appendChild(img);
             tile.appendChild(deleteBtn);
             tileContainer.appendChild(tile);
             
-            applySettings();
+            if (!isRestoringState) {
+                applySettings();
+                captureState();
+            }
             
             tile.ondblclick = () => {
                 if (activeTile) {
@@ -664,29 +713,17 @@
 
         // --- Drag and Drop ---
         const initDragAndDrop = () => {
-            const zone = $('#drop-zone');
-            zone.addEventListener('dragover', (e) => {
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('bg-blue-100'); });
+            dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('bg-blue-100'); });
+            dropZone.addEventListener('drop', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                zone.classList.add('bg-blue-100');
-            });
-            zone.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                zone.classList.remove('bg-blue-100');
-            });
-            zone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                zone.classList.remove('bg-blue-100');
-                
+                dropZone.classList.remove('bg-blue-100');
                 const files = e.dataTransfer.files;
                 for (const file of files) {
                     if (file.type.startsWith('image/')) {
                         const reader = new FileReader();
-                        reader.onload = (event) => {
-                            createTile(event.target.result);
-                        };
+                        reader.onload = (event) => createTile(event.target.result);
                         reader.readAsDataURL(file);
                     }
                 }
@@ -706,6 +743,7 @@
                         settings.bgImage = event.target.result;
                         applySettings();
                         saveSettings();
+                        captureState();
                     };
                     reader.readAsDataURL(file);
                 }
@@ -714,12 +752,11 @@
 
         // --- SortableJS for Reordering ---
         const initSortable = () => {
-            if (sortable) {
-                sortable.destroy();
-            }
+            if (sortable) sortable.destroy();
             sortable = new Sortable(tileContainer, {
                 animation: 150,
                 ghostClass: 'opacity-50',
+                onEnd: () => captureState(),
             });
         };
         
@@ -728,79 +765,40 @@
             $$('.accordion-toggle').forEach(toggle => {
                 const content = toggle.nextElementSibling;
                 const arrow = toggle.querySelector('.accordion-arrow');
-                
                 content.style.maxHeight = '0px';
                 arrow.classList.remove('rotate-180');
-
                 toggle.addEventListener('click', () => {
                     arrow.classList.toggle('rotate-180');
-                    if (content.style.maxHeight === '0px') {
-                        content.style.maxHeight = content.scrollHeight + "px";
-                    } else {
-                        content.style.maxHeight = '0px';
-                    }
+                    content.style.maxHeight = content.style.maxHeight === '0px' ? content.scrollHeight + "px" : '0px';
                 });
             });
         };
 
         // --- Export Functionality ---
         const updateExportPreview = () => {
-            const scaleEl = $('#export-scale');
-            const scaleValueEl = $('#export-scale-value');
             const sizePreviewEl = $('#export-size-preview');
-
-            if (!scaleEl || !scaleValueEl || !sizePreviewEl) {
-                return;
-            }
-
-            const scale = parseFloat(scaleEl.value);
-            const width = Math.round(settings.canvasWidth * scale);
-            const height = Math.round(settings.canvasHeight * scale);
-            sizePreviewEl.textContent = `${width}x${height}`;
-            scaleValueEl.textContent = `${scale.toFixed(1)}`;
+            if (!sizePreviewEl) return;
+            sizePreviewEl.textContent = `${settings.canvasWidth}x${settings.canvasHeight} px`;
         };
 
         const exportCanvas = () => {
-            if (activeTile) {
-                activeTile.style.boxShadow = 'none';
-            }
-            const scale = parseFloat($('#export-scale').value);
+            if (activeTile) activeTile.style.boxShadow = 'none';
             const format = $('#export-format').value;
             const fileExtension = format.split('/')[1];
-
-            // Temporarily remove grid for export
-            const hadGrid = dropZone.classList.contains('drop-zone-bg');
-            if (hadGrid) {
-                dropZone.classList.remove('drop-zone-bg');
-            }
-
-            html2canvas(dropZone, {
-                scale: scale,
-                backgroundColor: null,
-                useCORS: true,
-                onclone: (doc) => {
-                    doc.querySelectorAll('.delete-btn').forEach(btn => btn.style.display = 'none');
-                }
-            }).then(canvas => {
+            html2canvas(dropZone, { scale: 1, backgroundColor: null, useCORS: true, onclone: (doc) => {
+                doc.querySelectorAll('.delete-btn').forEach(btn => btn.style.display = 'none');
+            }}).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `tile-layout-${Date.now()}.${fileExtension}`;
                 link.href = canvas.toDataURL(format, 0.95);
                 link.click();
                 showToast('toastImageExported');
-                
-                // Restore grid if it was there
-                if (hadGrid) {
-                    dropZone.classList.add('drop-zone-bg');
-                }
             });
         };
 
         // --- Save/Load State ---
         const saveState = () => {
-            const state = {
-                settings: settings,
-                tiles: []
-            };
+            const state = { settings: settings, tiles: [] };
             $$('.tile').forEach(tile => {
                 const img = tile.querySelector('img');
                 state.tiles.push({
@@ -813,7 +811,6 @@
                     }
                 });
             });
-
             const dataStr = JSON.stringify(state, null, 2);
             const blob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -830,13 +827,9 @@
             reader.onload = (e) => {
                 try {
                     const state = JSON.parse(e.target.result);
-                    tileContainer.innerHTML = '';
-                    settings = { ...defaultSettings, ...state.settings };
-                    updateUIFromSettings();
-                    applySettings();
-                    state.tiles.forEach(tileData => {
-                        createTile(tileData.src, tileData.adjustments);
-                    });
+                    restoreState(state);
+                    historyStack = [JSON.parse(JSON.stringify(state))];
+                    historyIndex = 0;
                     showToast('toastStateLoaded');
                 } catch (error) {
                     console.error("Error loading state:", error);
@@ -849,16 +842,12 @@
         // --- Event Listeners ---
         const initEventListeners = () => {
             $('#language-toggle-btn').addEventListener('click', toggleLanguage);
-
             $('#export-btn').addEventListener('click', () => openPanel('export-panel'));
             $('#help-btn').addEventListener('click', () => openPanel('help-panel'));
-            
-            $$('.back-to-settings-btn').forEach(btn => {
-                btn.addEventListener('click', () => openPanel('settings-panel'));
-            });
+            $$('.back-to-settings-btn').forEach(btn => btn.addEventListener('click', () => openPanel('settings-panel')));
 
             const inputs = [
-                'canvas-width', 'canvas-height', 'canvas-bg-color', 'show-grid',
+                'canvas-width', 'canvas-height', 'canvas-bg-color',
                 'bg-image-opacity', 'bg-image-scale', 'bg-image-pos-x', 'bg-image-pos-y',
                 'tile-width', 'tile-height', 'tile-bg-color', 'tile-bg-opacity', 'tile-border-color', 'tile-border-width',
                 'tile-border-radius', 'tile-margin'
@@ -867,20 +856,13 @@
                 const element = $('#' + id);
                 const eventType = (element.type === 'range' || element.type === 'color') ? 'input' : 'change';
                 element.addEventListener(eventType, (e) => {
-                    const keyMap = {
-                        'canvas-width': 'canvasWidth', 'canvas-height': 'canvasHeight',
-                        'canvas-bg-color': 'canvasBgColor', 'show-grid': 'showGrid',
-                        'bg-image-opacity': 'bgImageOpacity', 'bg-image-scale': 'bgImageScale',
-                        'bg-image-pos-x': 'bgImagePosX', 'bg-image-pos-y': 'bgImagePosY',
-                        'tile-width': 'tileWidth', 'tile-height': 'tileHeight', 'tile-bg-color': 'tileBgColor', 'tile-bg-opacity': 'tileBgOpacity',
-                        'tile-border-color': 'tileBorderColor', 'tile-border-width': 'tileBorderWidth',
-                        'tile-border-radius': 'tileBorderRadius', 'tile-margin': 'tileMargin'
-                    };
+                    const keyMap = {'canvas-width': 'canvasWidth', 'canvas-height': 'canvasHeight', 'canvas-bg-color': 'canvasBgColor', 'bg-image-opacity': 'bgImageOpacity', 'bg-image-scale': 'bgImageScale', 'bg-image-pos-x': 'bgImagePosX', 'bg-image-pos-y': 'bgImagePosY', 'tile-width': 'tileWidth', 'tile-height': 'tileHeight', 'tile-bg-color': 'tileBgColor', 'tile-bg-opacity': 'tileBgOpacity', 'tile-border-color': 'tileBorderColor', 'tile-border-width': 'tileBorderWidth', 'tile-border-radius': 'tileBorderRadius', 'tile-margin': 'tileMargin'};
                     const target = e.target;
                     const value = target.type === 'checkbox' ? target.checked : (target.type === 'number' || target.type === 'range' ? parseFloat(target.value) : target.value);
                     settings[keyMap[id]] = value;
                     applySettings();
                     saveSettings();
+                    debouncedCaptureState();
                 });
             });
 
@@ -888,25 +870,26 @@
                 settings.bgImage = null;
                 applySettings();
                 saveSettings();
+                captureState();
             });
 
             $('#reset-canvas-settings-btn').addEventListener('click', () => {
-                Object.keys(defaultCanvasSettings).forEach(key => {
-                    settings[key] = defaultCanvasSettings[key];
-                });
+                const preservedBgImage = settings.bgImage;
+                Object.keys(defaultCanvasSettings).forEach(key => settings[key] = defaultCanvasSettings[key]);
+                settings.bgImage = preservedBgImage;
                 updateUIFromSettings();
                 applySettings();
                 saveSettings();
+                captureState();
                 showToast('toastSettingsReset');
             });
 
             $('#reset-tile-settings-btn').addEventListener('click', () => {
-                Object.keys(defaultTileSettings).forEach(key => {
-                    settings[key] = defaultTileSettings[key];
-                });
+                Object.keys(defaultTileSettings).forEach(key => settings[key] = defaultTileSettings[key]);
                 updateUIFromSettings();
                 applySettings();
                 saveSettings();
+                captureState();
                 showToast('toastSettingsReset');
             });
 
@@ -916,10 +899,9 @@
                     const img = activeTile.querySelector('img');
                     const keyMap = { 'image-zoom': 'zoom', 'image-pos-x': 'posX', 'image-pos-y': 'posY', 'image-opacity': 'opacity' };
                     img.dataset[keyMap[id]] = e.target.value;
-                    if (id === 'image-zoom') {
-                        $('#zoom-value').textContent = Math.round(e.target.value * 100);
-                    }
+                    if (id === 'image-zoom') $('#zoom-value').textContent = Math.round(e.target.value * 100);
                     applyImageAdjustments(img);
+                    debouncedCaptureState();
                 });
             });
             
@@ -932,18 +914,15 @@
                 img.dataset.opacity = 1;
                 applyImageAdjustments(img);
                 updateAdjustUI(img);
+                captureState();
             });
 
             $('#export-canvas-btn').addEventListener('click', exportCanvas);
-            $('#export-scale').addEventListener('input', updateExportPreview);
-
             $('#save-state-btn').addEventListener('click', saveState);
             $('#load-state-btn').addEventListener('click', () => $('#load-state-input').click());
             $('#load-state-input').addEventListener('change', (e) => {
                 const file = e.target.files[0];
-                if (file) {
-                    loadState(file);
-                }
+                if (file) loadState(file);
                 e.target.value = null;
             });
             
@@ -951,8 +930,18 @@
                 if (activeTile && !leftPanel.contains(e.target) && !activeTile.contains(e.target)) {
                     activeTile.style.boxShadow = 'none';
                     activeTile = null;
-                    if(activePanel === 'adjust-panel') {
-                        openPanel('settings-panel');
+                    if(activePanel === 'adjust-panel') openPanel('settings-panel');
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    if (e.key === 'z') {
+                        e.preventDefault();
+                        if (e.shiftKey) { redo(); } else { undo(); }
+                    } else if (e.key === 'y') {
+                        e.preventDefault();
+                        redo();
                     }
                 }
             });
@@ -967,6 +956,7 @@
             initAccordion();
             initEventListeners();
             openPanel('settings-panel');
+            captureState(); // Capture initial state
         });
 
     </script>
