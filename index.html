@@ -173,6 +173,10 @@
                                 <label class="flex-shrink-0 mr-2"><span data-lang="borderColor">枠の色</span>: <input type="color" id="tile-border-color" class="align-middle"></label>
                                 <label class="w-full"><span data-lang="borderWidth" class="sr-only">枠の幅</span><input type="range" id="tile-border-width" min="0" max="20" step="1" class="w-full"></label>
                             </div>
+                            <div class="flex items-center text-sm">
+                                <label class="flex-shrink-0 mr-2"><span data-lang="outlineColor">輪郭の色</span>: <input type="color" id="tile-outline-color" class="align-middle"></label>
+                                <label class="w-full"><span data-lang="outlineWidth" class="sr-only">輪郭の幅</span><input type="range" id="tile-outline-width" min="0" max="10" step="1" class="w-full"></label>
+                            </div>
                             <label class="block text-sm"><span data-lang="borderRadius">枠の丸み</span>: <input type="range" id="tile-border-radius" min="0" max="50" step="1" class="w-full"></label>
                             <label class="block text-sm"><span data-lang="tileMargin">タイル間隔</span>: <input type="range" id="tile-margin" min="0" max="50" step="1" class="w-full"></label>
                             <button id="reset-tile-settings-btn" class="w-full mt-2 text-sm bg-orange-500 text-white py-1 rounded hover:bg-orange-600" data-lang="resetSectionSettings">設定をリセット</button>
@@ -298,6 +302,8 @@
                 borderWidth: "枠の幅",
                 borderRadius: "枠の丸み",
                 tileMargin: "タイル間隔",
+                outlineColor: "輪郭の色",
+                outlineWidth: "輪郭の幅",
                 resetSectionSettings: "設定をリセット",
                 adjustTitle: "画像調整",
                 imageOpacity: "画像透過度",
@@ -353,6 +359,8 @@
                 borderWidth: "Border Width",
                 borderRadius: "Border Radius",
                 tileMargin: "Tile Margin",
+                outlineColor: "Outline Color",
+                outlineWidth: "Outline Width",
                 resetSectionSettings: "Reset Settings",
                 adjustTitle: "Image Adjustment",
                 imageOpacity: "Image Opacity",
@@ -399,11 +407,13 @@
             tileWidth: 162,
             tileHeight: 162,
             tileBgColor: '#FFFFFF',
-            tileBgOpacity: 1.0,
+            tileBgOpacity: 0.5,
             tileBorderColor: '#000000',
             tileBorderWidth: 2,
             tileBorderRadius: 8,
             tileMargin: 0,
+            tileOutlineColor: '#FFFFFF',
+            tileOutlineWidth: 0,
         };
         const defaultSettings = { ...defaultCanvasSettings, ...defaultTileSettings };
         let settings = { ...defaultSettings };
@@ -498,6 +508,12 @@
                     img.style.padding = `${padding}px`;
                     if (img.complete) {
                         fitImageInTile(img);
+                    }
+                    // Apply global outline settings
+                    if (settings.tileOutlineWidth > 0) {
+                        img.style.filter = `drop-shadow(0px 0px ${settings.tileOutlineWidth}px ${settings.tileOutlineColor})`;
+                    } else {
+                        img.style.filter = 'none';
                     }
                 }
             });
@@ -850,13 +866,13 @@
                 'canvas-width', 'canvas-height', 'canvas-bg-color',
                 'bg-image-opacity', 'bg-image-scale', 'bg-image-pos-x', 'bg-image-pos-y',
                 'tile-width', 'tile-height', 'tile-bg-color', 'tile-bg-opacity', 'tile-border-color', 'tile-border-width',
-                'tile-border-radius', 'tile-margin'
+                'tile-border-radius', 'tile-margin', 'tile-outline-color', 'tile-outline-width'
             ];
             inputs.forEach(id => {
                 const element = $('#' + id);
                 const eventType = (element.type === 'range' || element.type === 'color') ? 'input' : 'change';
                 element.addEventListener(eventType, (e) => {
-                    const keyMap = {'canvas-width': 'canvasWidth', 'canvas-height': 'canvasHeight', 'canvas-bg-color': 'canvasBgColor', 'bg-image-opacity': 'bgImageOpacity', 'bg-image-scale': 'bgImageScale', 'bg-image-pos-x': 'bgImagePosX', 'bg-image-pos-y': 'bgImagePosY', 'tile-width': 'tileWidth', 'tile-height': 'tileHeight', 'tile-bg-color': 'tileBgColor', 'tile-bg-opacity': 'tileBgOpacity', 'tile-border-color': 'tileBorderColor', 'tile-border-width': 'tileBorderWidth', 'tile-border-radius': 'tileBorderRadius', 'tile-margin': 'tileMargin'};
+                    const keyMap = {'canvas-width': 'canvasWidth', 'canvas-height': 'canvasHeight', 'canvas-bg-color': 'canvasBgColor', 'bg-image-opacity': 'bgImageOpacity', 'bg-image-scale': 'bgImageScale', 'bg-image-pos-x': 'bgImagePosX', 'bg-image-pos-y': 'bgImagePosY', 'tile-width': 'tileWidth', 'tile-height': 'tileHeight', 'tile-bg-color': 'tileBgColor', 'tile-bg-opacity': 'tileBgOpacity', 'tile-border-color': 'tileBorderColor', 'tile-border-width': 'tileBorderWidth', 'tile-border-radius': 'tileBorderRadius', 'tile-margin': 'tileMargin', 'tile-outline-color': 'tileOutlineColor', 'tile-outline-width': 'tileOutlineWidth'};
                     const target = e.target;
                     const value = target.type === 'checkbox' ? target.checked : (target.type === 'number' || target.type === 'range' ? parseFloat(target.value) : target.value);
                     settings[keyMap[id]] = value;
@@ -897,7 +913,7 @@
                 $('#' + id).addEventListener('input', (e) => {
                     if (!activeTile) return;
                     const img = activeTile.querySelector('img');
-                    const keyMap = { 'image-zoom': 'zoom', 'image-pos-x': 'posX', 'image-pos-y': 'posY', 'image-opacity': 'opacity' };
+                    const keyMap = { 'image-zoom': 'zoom', 'image-pos-x': 'posX', 'image-pos-y': 'posY', 'image-opacity': 'opacity'};
                     img.dataset[keyMap[id]] = e.target.value;
                     if (id === 'image-zoom') $('#zoom-value').textContent = Math.round(e.target.value * 100);
                     applyImageAdjustments(img);
