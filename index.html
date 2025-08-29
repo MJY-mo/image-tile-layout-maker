@@ -6,9 +6,7 @@
     <title>画像放り込み一覧メーカー</title>
     <link rel="icon" href="favicon1.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SortableJS for drag-and-drop reordering -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-    <!-- html2canvas for exporting as image -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* Custom styles */
@@ -87,37 +85,38 @@
 </head>
 <body class="bg-gray-100 text-gray-800 flex flex-col h-screen">
 
-    <!-- Header -->
     <header class="bg-white shadow-md p-2 flex items-center justify-between flex-shrink-0 z-20">
         <h1 class="text-xl font-bold text-gray-700" data-lang="appTitle">画像放り込み一覧メーカー</h1>
         <div class="flex items-center space-x-2">
-            <!-- Left Panel Toggles -->
+            <button id="fullscreen-btn" class="bg-gray-200 hover:bg-gray-300 p-2 rounded-md" title="フルスクリーン切り替え">
+                <svg id="fullscreen-enter-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrows-fullscreen" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707zm4.344 0a.5.5 0 0 1 .707 0l4.096 4.096V11.5a.5.5 0 1 1 1 0v3.975a.5.5 0 0 1-.5.5H11.5a.5.5 0 0 1 0-1h2.768l-4.096-4.096a.5.5 0 0 1 0-.707zm0-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707zm-4.344 0a.5.5 0 0 1-.707 0L1.025 1.732V4.5a.5.5 0 0 1-1 0V.525a.5.5 0 0 1 .5-.5H4.5a.5.5 0 0 1 0 1H1.732l4.096 4.096a.5.5 0 0 1 0 .707z"/>
+                </svg>
+                <svg id="fullscreen-exit-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-fullscreen-exit hidden" viewBox="0 0 16 16">
+                    <path d="M5.5 0a.5.5 0 0 1 .5.5v4A.5.5 0 0 1 5 5h-4a.5.5 0 0 1 0-1h3.5V.5a.5.5 0 0 1 .5-.5zm-5 5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V5.5H.5a.5.5 0 0 1-.5-.5zm10 5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0v-3.5h-3.5a.5.5 0 0 1-.5-.5z"/>
+                    <path d="M5.5 10.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0v-3.5h-3.5a.5.5 0 0 1-.5-.5zm5-5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-3.5v3.5a.5.5 0 0 1-1 0v-4z"/>
+                </svg>
+            </button>
             <button id="export-btn" class="panel-button bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm" data-lang="exportImage">画像出力</button>
             <button id="help-btn" class="panel-button bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm" data-lang="howToUse">操作方法</button>
             
             <div class="border-l h-8 mx-2"></div>
 
-            <!-- Data Management -->
             <button id="save-state-btn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm" data-lang="save">保存</button>
             <button id="load-state-btn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm" data-lang="load">呼び出し</button>
             <input type="file" id="load-state-input" class="hidden" accept=".json">
 
             <div class="border-l h-8 mx-2"></div>
 
-            <!-- Language Selector -->
             <button id="language-toggle-btn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm"></button>
         </div>
     </header>
 
-    <!-- Main Content -->
     <div class="flex flex-grow overflow-hidden">
-        <!-- Left Panel -->
         <aside id="left-panel" class="w-80 bg-white p-4 shadow-lg overflow-y-auto flex-shrink-0 transition-all duration-300 ease-in-out -translate-x-full absolute md:relative md:translate-x-0 z-10 h-full">
-            <!-- Settings Panel -->
             <div id="settings-panel" class="panel-content space-y-4 hidden">
                 <h2 class="text-lg font-bold border-b pb-2" data-lang="settingsTitle">設定</h2>
                 
-                <!-- Canvas Settings Accordion -->
                 <div class="accordion-item border rounded-md">
                     <h3 class="accordion-toggle flex justify-between items-center w-full font-semibold cursor-pointer p-2 bg-gray-50">
                         <span data-lang="canvasSettings">フィールド設定</span>
@@ -153,7 +152,6 @@
                     </div>
                 </div>
 
-                <!-- Tile Settings Accordion -->
                 <div class="accordion-item border rounded-md">
                         <h3 class="accordion-toggle flex justify-between items-center w-full font-semibold cursor-pointer p-2 bg-gray-50">
                             <span data-lang="tileSettings">タイル設定</span>
@@ -188,7 +186,6 @@
                 </div>
             </div>
 
-            <!-- Image Adjust Panel -->
             <div id="adjust-panel" class="panel-content space-y-4 hidden">
                 <div class="flex justify-between items-center border-b pb-2">
                     <h2 class="text-lg font-bold" data-lang="adjustTitle">画像調整</h2>
@@ -202,7 +199,6 @@
                 </div>
             </div>
 
-            <!-- Export Panel -->
             <div id="export-panel" class="panel-content space-y-4 hidden">
                  <div class="flex justify-between items-center border-b pb-2">
                     <h2 class="text-lg font-bold" data-lang="exportTitle">画像出力</h2>
@@ -219,7 +215,6 @@
                 </div>
             </div>
 
-            <!-- Help Panel -->
             <div id="help-panel" class="panel-content space-y-4 hidden">
                 <div class="flex justify-between items-center border-b pb-2">
                     <h2 class="text-lg font-bold" data-lang="howToUseTitle">操作方法</h2>
@@ -234,12 +229,12 @@
                     <p data-lang="helpP6"></p>
                     <p data-lang="helpP7"></p>
                     <p data-lang="helpP8"></p>
+                    <p data-lang="helpP9"></p>
                 </div>
             </div>
 
         </aside>
 
-        <!-- Main Canvas Area -->
         <main class="flex-grow flex items-center justify-center p-4 bg-gray-200 overflow-auto">
             <div id="drop-zone-wrapper" class="shadow-lg">
                 <div id="drop-zone" class="bg-white relative">
@@ -247,14 +242,12 @@
                         <div id="bg-image-element" class="absolute bg-no-repeat bg-center w-full h-full"></div>
                     </div>
                     <div id="tile-container" class="relative flex flex-wrap content-start items-start">
-                        <!-- Tiles will be appended here -->
-                    </div>
+                        </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg opacity-0 transition-opacity duration-300">
         <p id="toast-message"></p>
     </div>
@@ -285,6 +278,7 @@
                 load: "呼び出し",
                 exportImage: "画像出力",
                 howToUse: "操作方法",
+                toggleFullscreen: "フルスクリーン切替",
                 language: "言語",
                 settingsTitle: "設定",
                 backToSettings: "設定に戻る",
@@ -327,6 +321,7 @@
                 helpP6: "<strong>保存と呼び出し</strong>: 「保存」ボタンで現在の状態をファイル(.json)に保存（ダウンロード）します。「呼び出し」ボタンでファイルを読み込んで復元できます。",
                 helpP7: "<strong>画像出力</strong>: 上部の「画像出力」ボタンで、現在のフィールドを一枚の画像として保存（ダウンロード）できます。",
                 helpP8: "<strong>元に戻す/やり直す</strong>: 操作を間違えた場合は、キーボードのショートカット(Ctrl+Z)で元に戻せます。元に戻した操作をやり直すには(Ctrl+Y)を押します。",
+                helpP9: "<strong>全画面表示</strong>: ヘッダーのボタンから全画面表示の切り替えができます。OBSのウィンドウキャプチャで利用する際は、この機能でブラウザのUI（URLバーなど）を非表示にすることをおすすめします。",
                 toastSettingsSaved: "設定を保存しました。",
                 toastStateSaved: "状態をファイルに保存しました。",
                 toastStateLoaded: "状態を読み込みました。",
@@ -343,6 +338,7 @@
                 load: "Load",
                 exportImage: "Export Image",
                 howToUse: "How to Use",
+                toggleFullscreen: "Toggle Fullscreen",
                 language: "Language",
                 settingsTitle: "Settings",
                 backToSettings: "Back to Settings",
@@ -385,6 +381,7 @@
                 helpP6: "<strong>Save & Load</strong>: Save (download) the current state to a file (.json) with the 'Save' button. Load a file to restore your work with the 'Load' button.",
                 helpP7: "<strong>Export as Image</strong>: Save (download) the current field as a single image using the 'Export Image' button at the top.",
                 helpP8: "<strong>Undo/Redo</strong>: If you make a mistake, you can undo it with the keyboard shortcut (Ctrl+Z). To redo an undone action, press (Ctrl+Y).",
+                helpP9: "<strong>Toggle Fullscreen</strong>: You can toggle fullscreen mode from the button in the header. When using with window capture in software like OBS, it's recommended to use this feature to hide the browser UI (like the URL bar).",
                 toastSettingsSaved: "Settings saved.",
                 toastStateSaved: "State saved to file.",
                 toastStateLoaded: "State loaded.",
@@ -810,14 +807,9 @@
             const options = {
                 scale: 1,
                 useCORS: true,
-                // ▼▼▼ MODIFIED ▼▼▼
-                // For PNG, set background to null for transparency. For JPEG, use the set color.
                 backgroundColor: format === 'image/png' ? null : settings.canvasBgColor,
-                // ▲▲▲ MODIFIED ▲▲▲
                 onclone: (clonedDoc) => {
                     clonedDoc.querySelectorAll('.delete-btn').forEach(btn => btn.style.display = 'none');
-                    // The element's own background color is now handled by the main backgroundColor option,
-                    // but we can leave this for safety. It ensures the element itself is transparent.
                     if (format === 'image/png') {
                         const clonedDropZone = clonedDoc.querySelector('#drop-zone');
                         if (clonedDropZone) {
@@ -985,6 +977,36 @@
                     }
                 }
             });
+
+            // --- Fullscreen Logic ---
+            const fullscreenBtn = $('#fullscreen-btn');
+            const enterIcon = $('#fullscreen-enter-icon');
+            const exitIcon = $('#fullscreen-exit-icon');
+
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                    });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            }
+
+            function updateFullscreenButton() {
+                if (document.fullscreenElement) {
+                    enterIcon.classList.add('hidden');
+                    exitIcon.classList.remove('hidden');
+                } else {
+                    enterIcon.classList.remove('hidden');
+                    exitIcon.classList.add('hidden');
+                }
+            }
+
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            document.addEventListener('fullscreenchange', updateFullscreenButton);
         };
 
         // --- Initialization ---
