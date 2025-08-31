@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <style>
         /* Custom styles */
         body {
@@ -88,15 +90,7 @@
     <header class="bg-white shadow-md p-2 flex items-center justify-between flex-shrink-0 z-20">
         <h1 class="text-xl font-bold text-gray-700" data-lang="appTitle">画像放り込み一覧メーカー</h1>
         <div class="flex items-center space-x-2">
-            <button id="fullscreen-btn" class="bg-gray-200 hover:bg-gray-300 p-2 rounded-md" title="フルスクリーン切り替え">
-                <svg id="fullscreen-enter-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrows-fullscreen" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707zm4.344 0a.5.5 0 0 1 .707 0l4.096 4.096V11.5a.5.5 0 1 1 1 0v3.975a.5.5 0 0 1-.5.5H11.5a.5.5 0 0 1 0-1h2.768l-4.096-4.096a.5.5 0 0 1 0-.707zm0-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707zm-4.344 0a.5.5 0 0 1-.707 0L1.025 1.732V4.5a.5.5 0 0 1-1 0V.525a.5.5 0 0 1 .5-.5H4.5a.5.5 0 0 1 0 1H1.732l4.096 4.096a.5.5 0 0 1 0 .707z"/>
-                </svg>
-                <svg id="fullscreen-exit-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-fullscreen-exit hidden" viewBox="0 0 16 16">
-                    <path d="M5.5 0a.5.5 0 0 1 .5.5v4A.5.5 0 0 1 5 5h-4a.5.5 0 0 1 0-1h3.5V.5a.5.5 0 0 1 .5-.5zm-5 5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V5.5H.5a.5.5 0 0 1-.5-.5zm10 5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0v-3.5h-3.5a.5.5 0 0 1-.5-.5z"/>
-                    <path d="M5.5 10.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0v-3.5h-3.5a.5.5 0 0 1-.5-.5zm5-5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-3.5v3.5a.5.5 0 0 1-1 0v-4z"/>
-                </svg>
-            </button>
+            <button id="fullscreen-btn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm w-10 text-center" title="フルスクリーン切替"><i class="fas fa-expand"></i></button>
             <button id="export-btn" class="panel-button bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm" data-lang="exportImage">画像出力</button>
             <button id="help-btn" class="panel-button bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm" data-lang="howToUse">操作方法</button>
             
@@ -279,6 +273,8 @@
                 exportImage: "画像出力",
                 howToUse: "操作方法",
                 toggleFullscreen: "フルスクリーン切替",
+                fullscreenEnter: "全画面表示",
+                fullscreenExit: "全画面解除",
                 language: "言語",
                 settingsTitle: "設定",
                 backToSettings: "設定に戻る",
@@ -339,6 +335,8 @@
                 exportImage: "Export Image",
                 howToUse: "How to Use",
                 toggleFullscreen: "Toggle Fullscreen",
+                fullscreenEnter: "Fullscreen",
+                fullscreenExit: "Exit Fullscreen",
                 language: "Language",
                 settingsTitle: "Settings",
                 backToSettings: "Back to Settings",
@@ -459,6 +457,7 @@
             } else {
                 langBtn.textContent = '日本語';
             }
+            updateFullscreenButton();
         };
 
         const toggleLanguage = () => {
@@ -870,6 +869,35 @@
             };
             reader.readAsText(file);
         };
+        
+        // --- Fullscreen Logic ---
+        const toggleFullscreen = () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        };
+
+        const updateFullscreenButton = () => {
+            const btn = $('#fullscreen-btn');
+            if(!btn) return;
+            const icon = btn.querySelector('i');
+            const t = (key) => uiStrings[currentLang][key] || key;
+            if (document.fullscreenElement) {
+                icon.classList.remove('fa-expand');
+                icon.classList.add('fa-compress');
+                btn.title = t('fullscreenExit');
+            } else {
+                icon.classList.remove('fa-compress');
+                icon.classList.add('fa-expand');
+                btn.title = t('fullscreenEnter');
+            }
+        };
 
         // --- Event Listeners ---
         const initEventListeners = () => {
@@ -978,34 +1006,7 @@
                 }
             });
 
-            // --- Fullscreen Logic ---
-            const fullscreenBtn = $('#fullscreen-btn');
-            const enterIcon = $('#fullscreen-enter-icon');
-            const exitIcon = $('#fullscreen-exit-icon');
-
-            function toggleFullscreen() {
-                if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen().catch(err => {
-                        alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-                    });
-                } else {
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen();
-                    }
-                }
-            }
-
-            function updateFullscreenButton() {
-                if (document.fullscreenElement) {
-                    enterIcon.classList.add('hidden');
-                    exitIcon.classList.remove('hidden');
-                } else {
-                    enterIcon.classList.remove('hidden');
-                    exitIcon.classList.add('hidden');
-                }
-            }
-
-            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            $('#fullscreen-btn').addEventListener('click', toggleFullscreen);
             document.addEventListener('fullscreenchange', updateFullscreenButton);
         };
 
@@ -1024,3 +1025,4 @@
     </script>
 </body>
 </html>
+
